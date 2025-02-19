@@ -134,27 +134,29 @@ def __construct_filepaths(
             if label == '_background_noise_' or label == 'silence':
                 continue
 
-        if class_split == 'sub' and label not in class_subset:
-            label = 'unknown'
+            if class_split == 'sub' and label not in class_subset:
+                label = 'unknown'
+
+                if uid in valset_uids:
+                    unknown_val_filepaths.append((label, entry))
+                elif uid in testset_uids:
+                    unknown_test_filepaths.append((label, entry))
+
+            if uid not in valset_uids and uid not in testset_uids:
+                label_count[label] += 1
+                label_filepaths[label].append((label, entry))
+
+            if label == 'unknown':
+                continue
 
             if uid in valset_uids:
-                unknown_val_filepaths.append((label, entry))
+                val.append((label, entry))
             elif uid in testset_uids:
-                unknown_test_filepaths.append((label, entry))
-
-        if uid not in valset_uids and uid not in testset_uids:
-            label_count[label] += 1
-            label_filepaths[label].append((label, entry))
-
-        if label == 'unknown':
-            continue
-
-        if uid in valset_uids:
-            val.append((label, entry))
-        elif uid in testset_uids:
-            test.append((label, entry))
+                test.append((label, entry))
+            else:
+                train.append((label, entry))
         else:
-            train.append((label, entry))
+            logging.warning(f'Skipped entry due to pattern mismatch: {entry}')  # Log unmatched entries
 
     return {
         'label_count': label_count,
@@ -165,6 +167,7 @@ def __construct_filepaths(
         'val': val,
         'test': test,
     }
+
 
 
 def __construct_silence_set(
